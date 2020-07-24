@@ -11,6 +11,8 @@ const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 
 const register = require('./controllers/register.js');
+const login = require('./controllers/login.js');
+const authorization = require('./controllers/authorization.js');
 
 app.use(helmet());
 app.use(cors());
@@ -28,20 +30,9 @@ const db = knex({
 
 const jwtSecretKey = ':Q}5?$!K"@Fo+K5';
 
-app.get('/', (req, res) => {
-    res.send('it is working')
-})
 app.post('/register', (req, res) => register.handleRegister(req, res, bcrypt, jwt, jwtSecretKey, nodemailer, dotenv, db));
-app.get('/authorization/:token', (req, res) => {
-    jwt.verify(req.params.token, jwtSecretKey, (err, decoded) => {
-        err
-        ? res.send(err)
-        : db('login')
-        .where('email', '=', decoded.email)
-        .update({is_confirmed: true}, ['username', 'email'])
-        .then(data => res.redirect('http://localhost:3000/login'))
-    });
-})
+app.post('/login', (req, res) => login.handleLogin(req, res, bcrypt, db));
+app.get('/authorization/:token', (req, res) => authorization.handleAuthorization(req, res, jwt, jwtSecretKey, db));
 
 io.on('connection', socket => {
     console.log('a client connected')
